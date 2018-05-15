@@ -1,0 +1,259 @@
+#Lab 02
+#Matt Humphries
+#CSC 311 COMPUTER ORGANIZATION AND SOFTWARE INTERFACE
+
+.data
+
+SystemPrompt: .asciiz" This program will calculate the area of a 
+	\n circle, square or rectangle based on the integers you enter.
+	\n you will be asked first what kind of shape you want to make
+	\n then you will be asked for integer values x1, x2, y1 and y2.
+	\n -----------------------------------------------------------
+	\n To Quit, please enter 0
+	\n To calculate the area of a circle please enter 1
+	\n To calculate the area of a square please enter 2
+	\n To calculate the area of a rectangle, please enter 3.
+	\n Make your selection now: "
+
+Prompt1: .asciiz "\n Please enter an integer for x1: "
+Prompt2: .asciiz "\n Please enter an integer for x2: "
+Prompt3: .asciiz "\n Please enter an integer for y1: "
+Prompt4: .asciiz "\n Please enter an integer for y2: "
+
+	
+ResultCircle: .asciiz "\n Based on your values, the area of the circle is: "
+ResultSquare: .asciiz "\n Based on your values, the area of the square is: "
+ResultRectangle: .asciiz "\n Based on your values, the area of the rectangle is: "
+BlankLine: .asciiz "\n"
+	.globl main
+	.text
+
+main:
+# System prompt and user selection
+
+	li $s1, 1
+	li $s2, 2
+	li $s3, 3
+	
+	li $v0, 4 # print string
+	la $a0, SystemPrompt 
+	syscall
+	
+	li $v0, 5 # read integer
+	syscall
+	move $s0, $v0 # move to $s0 the integer stored in $v0
+	
+	beqz $s0, End # closes when the user enters 0
+	beq  $s0, $s1, Circle # Calculates area of a circle when user enters 1
+	beq  $s0, $s2, Square # Calculates area of a square when user enters 2
+	beq  $s0, $s3, Rectangle # Calculates area of a rectangle when user enters anything other than 0,1,2.
+
+Circle:
+# Code for calculating the circle.
+
+# System prompt and read values
+
+	li $v0, 4 # Print String.
+	la $a0, BlankLine
+	syscall
+
+	li $v0, 4 # print string for x1
+	la $a0, Prompt1 # print prompt for x1 value
+	syscall
+	li $v0, 5 # reads an integer for x1 value
+	syscall
+	move $t0, $v0 # moves the x1 integer to temp register
+
+	li $v0, 4 # print string for x2
+	la $a0, Prompt2 # print prompt for x2 value
+	syscall
+	li $v0, 5 # reads an integer for x2 value
+	syscall
+	move $t1, $v0 # moves the x2 integer to temp register
+
+	li $v0, 4 # print string for y1
+	la $a0, Prompt3 # print prompt for y1 value
+	syscall
+	li $v0, 5 # reads an integer for y1 value
+	syscall
+	move $t2, $v0 # moves the y1 integer to temp register
+
+	li $v0, 4 # print string for y2
+	la $a0, Prompt4 # print prompt for y2 value
+	syscall
+	li $v0, 5 # reads an integer for y2 value
+	syscall
+	move $t3, $v0 # moves the y2 integer to temp register
+
+# Circle area calculation -------------------------------------
+
+	sub $t4, $t2, $t0 # puts result of x2-x1 into register $t4
+	sub $t5, $t3, $t1 # puts result of y2-y1 into register $t5
+	
+	mult $t4, $t4 # put result of (x2-x1) * (x2-x1) into special register LO 
+	mflo $t6 # moves from special register LO to $t6 
+	
+	mult $t5, $t5 # put result of (y2-y1) * (y2-y1) into special register LO 
+	mflo $t7 # moves from special register LO to $t7 
+	
+	add $t8, $t6, $t7 
+	
+	li $t9, 314156 # This is the number we will use for PI - later we will divide by 100000 to get PI
+	
+	mult $t8, $t9 # multiply PI by (delta x + delta y) ^2 put the result into LO
+	mflo $t1
+	
+	li $t9, 100000 # used to correct earlier PI value
+	
+	div $t1, $t9 # divides the result we got by 100000 - we only care about the result in LO (quotient)
+	
+	mflo $s4 # This is the area of the circle, moved to a save register.
+	
+# Print result for the circle calculation ----------------------------------
+
+	li $v0, 4 # Print string
+	la $a0, ResultCircle #Prints the message stored under the prompt ResultCircle
+	syscall
+	
+	li $v0, 1 # Print Integer
+	move $a0, $s4
+	syscall
+	
+	li $v0, 4
+	la $a0, BlankLine
+	syscall
+	
+	j main # Jumps back to main
+	
+
+Square:
+# Code for calculating the area of a square.
+
+# System prompt and read values
+
+	li $v0, 4 # Print String.
+	la $a0, BlankLine
+	syscall
+
+	li $v0, 4 # print string for x1
+	la $a0, Prompt1 # print prompt for x1 value
+	syscall
+	li $v0, 5 # reads an integer for x1 value
+	syscall
+	move $t0, $v0 # moves the x1 integer to temp register
+
+	li $v0, 4 # print string for x2
+	la $a0, Prompt2 # print prompt for x2 value
+	syscall
+	li $v0, 5 # reads an integer for x2 value
+	syscall
+	move $t1, $v0 # moves the x2 integer to temp register
+
+	li $v0, 4 # print string for y1
+	la $a0, Prompt3 # print prompt for y1 value
+	syscall
+	li $v0, 5 # reads an integer for y1 value
+	syscall
+	move $t2, $v0 # moves the y1 integer to temp register
+
+	li $v0, 4 # print string for y2
+	la $a0, Prompt4 # print prompt for y2 value
+	syscall
+	li $v0, 5 # reads an integer for y2 value
+	syscall
+	move $t3, $v0 # moves the y2 integer to temp register
+	
+# Square area calculation -------------------------------------
+
+	sub $t4, $t2, $t0 # puts result of x2-x1 into register $t4
+	sub $t5, $t3, $t1 # puts result of y2-y1 into register $t5
+	
+	mult $t4, $t4 # put result of (x2-x1) * (x2-x1) into special register LO 
+	mflo $t6 # moves from special register LO to $t6 
+	
+	mult $t5, $t5 # put result of (y2-y1) * (y2-y1) into special register LO 
+	mflo $t7 # moves from special register LO to $t7 
+	
+	add $s5, $t6, $t7 
+	
+	li $v0, 4 # Print String.
+	la $a0, ResultSquare
+	syscall
+	
+	li $v0, 1
+	move $a0, $s5
+	syscall
+	
+	li $v0, 4 # Print String.
+	la $a0, BlankLine
+	syscall
+	
+	j main
+
+Rectangle:
+# Code for calculating the area of a rectangle.
+
+# System prompt and read values
+
+	li $v0, 4 # Print String.
+	la $a0, BlankLine
+	syscall
+
+	li $v0, 4 # print string for x1
+	la $a0, Prompt1 # print prompt for x1 value
+	syscall
+	li $v0, 5 # reads an integer for x1 value
+	syscall
+	move $t0, $v0 # moves the x1 integer to temp register
+
+	li $v0, 4 # print string for x2
+	la $a0, Prompt2 # print prompt for x2 value
+	syscall
+	li $v0, 5 # reads an integer for x2 value
+	syscall
+	move $t1, $v0 # moves the x2 integer to temp register
+
+	li $v0, 4 # print string for y1
+	la $a0, Prompt3 # print prompt for y1 value
+	syscall
+	li $v0, 5 # reads an integer for y1 value
+	syscall
+	move $t2, $v0 # moves the y1 integer to temp register
+
+	li $v0, 4 # print string for y2
+	la $a0, Prompt4 # print prompt for y2 value
+	syscall
+	li $v0, 5 # reads an integer for y2 value
+	syscall
+	move $t3, $v0 # moves the y2 integer to temp register
+	
+# Rectangle area calculation -------------------------------------
+
+	sub $t4, $t2, $t0 # puts result of x2-x1 into register $t4
+	sub $t5, $t3, $t1 # puts result of y2-y1 into register $t5
+	
+	mult $t4, $t5
+	mflo $s6
+	
+	li $v0, 4 # Print String.
+	la $a0, ResultRectangle
+	syscall
+	
+	li $v0, 1
+	move $a0, $s6
+	syscall
+	
+	li $v0, 4 # Print String.
+	la $a0, BlankLine
+	syscall
+	
+	j main
+	
+End:
+	li $v0, 4
+	la $a0, Bye
+	syscall 
+	li $v0, 10
+	syscall
+
+#END OF PROGRAM
