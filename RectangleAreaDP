@@ -1,0 +1,141 @@
+#Lab 03
+#Matt Humphries
+#CSC 311COMPUTER ORGANIZATION AND SOFTWARE INTERFACE
+
+.data # Data declaration section
+
+systemprompt: .asciiz "\n This program will ask you to enter 4 decimal double values
+					   \n these values represent the 4 sides of a shape. Using this
+					   \n information, it will calculate the area of a square, rectangle
+					   \n and circle, given the 4 decimal double values you enter."
+prompt: .asciiz "\n Please enter a decimal double value: "
+blanklines: .asciiz "\n
+					 \n"
+resultcircle: .asciiz "\n Based on your values, the area of the circle is: "
+resultsquare: .asciiz "\n Based on your values, the area of the square is: "
+resultrectangle: .asciiz "\n Based on your values, the area of the rectangle is: "
+PI: .double 3.141592
+bye: .asciiz "\n Have a nice day!"
+	.globl main
+	.text
+
+main:						# Main program
+	
+	li $v0, 4
+	la $a0, systemprompt	# Explains what the program does.
+	syscall	
+	
+	li $v0, 4
+	la $a0, blanklines  	# prints 2 blank lines for formatting
+	syscall	
+	
+	li $v0, 4
+	la $a0, prompt			# Asks user to enter a double value
+	syscall
+	
+	li $v0, 7
+	syscall
+	mov.d $f2, $f0			# moves 1st double value entered from $f0 to $f2
+	
+	li $v0, 4
+	la $a0, prompt		    # Asks user to enter a double value
+	syscall
+	
+	li $v0, 7
+	syscall
+	mov.d $f4, $f0			# moves 2nd double value entered from $f0 to $f4
+	
+	li $v0, 4
+	la $a0, prompt			# Asks user to enter a double value
+	syscall
+	
+	li $v0, 7
+	syscall
+	mov.d $f6, $f0			# moves 3rd double value entered from $f0 to $f6
+	
+	li $v0, 4
+	la $a0, prompt			# Asks user to enter a double value
+	syscall
+	
+	li $v0, 7
+	syscall
+	mov.d $f8, $f0			# moves 4th double value entered from $f0 to $f8
+	
+	jal square              # jump and link to square - return here once square is complete
+	jal rectangle			# jump and link to rectangle - return here once rectangle is complete
+	jal circle				# jump and link to circle  - return here once circle is complete
+	j end					# jumps to end : could add loop here to prompt user again (j main, enter value, branch to end if 0 etc)
+		
+square:						# cacluates the area of the square as a double
+	
+	la $s1, getdistance         
+	jalr $s3, $s1			# jumps to getdistance to find side lengths and returns to $ra
+	
+	la $s2, getsides
+	jalr $s4, $s2			# calls getsides and returns to $s4 
+	add.d $f12, $f22, $f22  # adds (X2-Y2)^2 and (X1-Y1)^2 puts result into $f12 (printing register)
+	
+	li $v0, 4
+	la $a0, resultsquare    # prints the text for resultsquare
+	syscall
+	
+	li $v0, 3
+	syscall					# prints the double value for area of a square
+	jr $ra
+	
+rectangle: 					# cacluates the area of the rectangle as a double
+
+	la $s1, getdistance
+	jalr $s3, $s1		    #calls getdistance saves return adress in $s3 and jumpts to getDistance ($s1)
+	mul.d $f12, $f10, $f14	#(X2-X1) * (Y2-Y1) stored in $f12 (A=L*W)
+	
+	li $v0, 4
+	la $a0, resultrectangle # prints the text for resultrectangle
+	syscall
+	
+	li $v0, 3
+	syscall					# prints the double value for area of a rectangle
+	jr $ra
+	
+circle:
+	la $s1, getdistance
+	jalr $s3, $s1
+	la $s2, getsides
+	add.d $f18, $f22, $f20	#(X2-Y2)^2 ($f22) added together (Y1-Y1)^2 $(f20) answer in $f18
+	
+	l.d $f16, PI
+	mul.d $f12, $f18, $f16  # X2-X1 squared added with Y2-Y1 multipled with PI stored in $f12 (printing register)
+	
+	li $v0, 4
+	la $a0, resultcircle 	# prints the text for resultcircle
+	syscall
+	
+	li $v0, 3
+	syscall					# prints the double for the area of a circle
+	jr $ra
+
+getsides:
+
+	mul.d $f22, $f10, $f10  # X2-X1 squared stored in $f22
+	mul.d $f20, $f14, $f14  # Y2-Y1 squared stored in $f20
+	jr $s4					# returns to the address/ PC counter position for $s4
+
+getdistance:
+
+	sub.d $f10, $f6, $f2    # X2-X1 stored in $f10
+	sub.d $f14, $f8, $f4    # Y2-Y1 stored in $f14
+	jr $s3					# returns to the address/ PC counter position for $s3
+
+end:
+	li $v0, 4
+	la $a0, bye   			# Prints goodbye message
+	syscall	
+	
+	li $v0, 10			    # closes program
+	syscall
+	
+# END OF PROGRAM	
+	
+	
+	
+	
