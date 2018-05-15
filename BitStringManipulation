@@ -1,0 +1,206 @@
+#Lab 04
+#Matt Humphries
+#CSC 311 COMPUTER ORGANIZATION AND SOFTWARE INTERFACE
+
+.data # Data declaration section
+
+SystemPrompt: .asciiz "\n This program will tell you what members are present in the set of binary 
+					             \n digits that come from the hex values 0xaaaaaaa and 0x24924924.
+					             \n The program will then perform the logical functions OR and AND on these values
+					             \n and display the union and intersection. Finally, you will be prompted to enter
+					             \n an integer between 1 and 32, to see if that value is in either set.
+					             \n"
+Prompt: .asciiz       "\n\nPlease enter an integer between 1 and 32 : "
+BlankLine: .asciiz    "\n"
+BlankSpace: .asciiz   " "
+Bye: .asciiz 		      "\n Have a nice day."
+InSetMessage: .asciiz      "\n Your number is in the set. "
+NotInSetMessage: .asciiz   "\n Your number is not in the set. "
+UnionOfSet: .asciiz        "\n 
+					        \nThe union of the two sets is:  "
+IntersectionOfSet: .asciiz "\n 
+							\nThe intersection of the two sets is:  "
+.globl main
+.text
+
+main:
+	
+	li $v0, 4
+	la $a0, SystemPrompt		# Explains what the program does.
+	syscall	
+	
+	li $v0, 4
+	la $a0, BlankLine	    	# Prints  a blank line.
+	syscall	
+
+	li $s0, 0xaaaaaaaa  		# Test 1 dataset
+	li $s1, 0x24924924  		# Test 2 dataset
+	li $s2, 2			  		# Branch Condition
+	li $s3, 0	    			# Constant used for comparison	
+	li $s4, 32	    			# Used to stop the count
+	li $s7, 0					# First or Second bit compared to Input
+	li $t0, 0x00000001  		# Value to be ANDED (Bit mask)
+	li $t1, 1           		# Counter to print out index positions
+			
+	move $t2, $s0	    		# Moves test data to temp register for test data 1 - loop 1 runs off $T4
+	jal Loop		    		# Jumps to loop
+	
+	li $t1, 1					# Resets the counter
+	li $t0, 0x00000001  		# Value to be ANDED (Bit mask) RESET for second test
+	move $t2, $s1	    		# Moves test data to temp register for test data 1 - loop 1 runs off $t4
+
+	li $v0, 4
+	la $a0, BlankLine	    	# Prints  a blank line.
+	syscall	
+		
+	jal Loop					# Jumps to the loop
+	
+	jal Union					# Jumps to the Union
+	
+	jal Intersection			# Jumps to the Intersection
+		
+	li $t1, 1					# Resets the counter	
+	move $t2, $s0				# Copy the first bit string for comparison
+	li $t0, 0x00000001  		# Value to be ANDED (Bit mask) RELOADED
+	jal Input					# Jumps to check first user entered value
+	
+	li $t1, 1					# Resets the counter	
+	move $t2, $s1				# Copy the second bit string for comparison
+	li $t0, 0x00000001  		# Value to be ANDED (Bit mask) RELOADED
+	jal Input					# Jumps to check second user entered value
+	
+	j End
+	
+Loop:
+	
+	bgt $t1, $s4, Reset			# Compares the counter against the value "32" for reset.
+	and $t4, $t2, $t0   		# ANDS together $S0 bit string and the control bit string.
+	
+	beq $t4, $s3, NotElement	# Skips print function since the value is not an element.
+	
+	bgtz $s7, Compare			# When the value in $s7 > 0 - jump to compare.
+	
+	move $a0, $t1				# moves the element to $a0 for printing out.
+	
+	la $s5, Print				# Loads this point of the loop into $s5
+	jalr $s6, $s5				# $ra now is equal to $s5
+	
+NotElement:
+
+	addi $t1, $t1, 1			# Adds 1 to the counter.
+	sll $t0, $t0, 1				# Shift Logical Left 1 byte.
+	j Loop						# Jumps back to loop.
+	
+Reset:
+
+	jr $ra						# Jumps to last jump and link which was to enter loop for first time
+	
+Union:
+	li $v0, 4
+	la $a0, UnionOfSet	    	# Outputs the union of both strings as a decimal value, and then reads out a message
+	syscall	
+	
+	move $t2, $s0				# Puts first bit string into $t2
+	move $t3, $s1				# Puts first bit string into $t3
+	
+	or $t4, $t2, $t3			# OR together - giving the union
+	move $a0, $t4				# Puts the result into $a0 for printing.
+	
+	jalr $s6, $s5				# Jumps to the print function 
+	
+	j Reset						# Jumps back to main.
+	
+Intersection:
+	li $v0, 4
+	la $a0, IntersectionOfSet   # Outputs the intersection of both strings as a decimal value, and then reads out a message
+	syscall	
+	
+	move $t2, $s0				# Puts first bit string into $t2
+	move $t3, $s1				# Puts first bit string into $t3
+	
+	and $t4, $t2, $t3			# AND together - giving the intersection
+	move $a0, $t4				# Puts the result into $a0 for printing.
+	
+	jalr $s6, $s5				# Jumps to the print function 
+	
+	j Reset						# Jumps back to main.
+	
+Input:
+
+	li $s7, 1
+	
+	li $v0, 4
+	la $a0, Prompt	   	    	# Asks user to enter a number between 1-32
+	syscall	
+	
+	li $v0, 5
+	syscall	
+	move $t7, $v0 				# moves the user entered value into $t0
+	
+	bgt $t7, $s4, NotInSet  	# If value >32 branch to not inset
+	bgt $s7, 1, Greater30		# If the second value is > 30 branch to not in set (since second set is multiples of 3)
+	
+	j Loop
+	
+Compare:
+
+	beq $t7, $t1, InSet			# If user entered value matches then branch to Inset
+	beq $t1, $s4, NotInSet		# If user entered value does not match then branch to NotInset
+	bgt $t1, $t7, NotInSet	
+	
+	j NotElement
+
+InSet:
+
+	li $v0, 1
+	move $a0, $t7	   	    	# Asks user to enter a number between 1-32
+	syscall	
+	
+	li $v0, 4
+	la $a0, InSetMessage    	# Asks user to enter a number between 1-32
+	syscall
+	
+	addi $s7, $s7, 1
+	
+	j Reset
+	
+Greater30:
+
+	bgt $t7, 30, NotInSet
+	
+	j Loop
+
+NotInSet:
+
+	li $v0, 1	
+	move $a0, $t7	   	    	# Asks user to enter a number between 1-32
+	syscall	
+	
+	li $v0, 4
+	la $a0, NotInSetMessage 	# Asks user to enter a number between 1-32
+	syscall
+
+	addi $s7, $s7, 1
+	
+	j Reset
+	
+Print:
+
+	li $v0, 1		    
+	syscall
+	
+	li $v0, 4		    
+	la $a0, BlankSpace
+	syscall
+	
+	jr $s6
+
+End:
+	li $v0, 4
+	la $a0, Bye   				# Prints goodbye message
+	syscall	
+	
+	li $v0, 10			    	# closes program
+	syscall
+	
+#END OF PROGRAM 
