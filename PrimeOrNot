@@ -1,0 +1,141 @@
+#Matt Humphries
+#Programming Assignment 1
+#CSC 311 COMPUTER ORGANIZATION AND SOFTWARE INTERFACE
+
+.data
+
+SystemPrompt: .asciiz   " This program will take a positive integer 
+			\n and then calculate the number of factors it has.
+			\n Further, this program will also tell you if that number is 
+			\n prime or not.
+			\n -----------------------------------------------------------"
+Prompt1: .asciiz "\n Please enter a positive integer: "
+Prompt2: .asciiz "\n That was not a positive integer, please try again: "
+Bye: 	 .asciiz "\n Have a great day."
+
+Result1: .asciiz "\n The factors of the integer you entered are: "
+Result2: .asciiz "\n The integer you entered is prime."
+Result3: .asciiz "\n The integer you entered is NOT prime."
+Retry:   .asciiz "\n Would you like to run again? \n Press 0 to run again or press 1 to quit"
+
+BlankLine: .asciiz "\n"
+
+.globl main
+.text
+
+
+	
+main:
+# System prompt and user selection
+
+	li $s1, 0
+	li $s2, 2
+
+	li $v0, 4 # print string
+	la $a0, SystemPrompt
+	syscall
+	
+	li $v0, 4 # print string
+	la $a0, Prompt1
+	syscall
+			
+	li $v0, 5 # read integer
+	syscall
+	move $s0, $v0 # move to $s0 the integer stored in $v0
+	
+	bltz $s0, Neg # If user enters negative number, run the Neg code
+	
+	beqz $s0, End # closes when the user enters 0
+	li $t2, 0
+	or $t0, $s0, $s1
+
+Loop:
+# Continues to decrease until the result in $t0 equals zero
+
+	beqz $t0, IsPrime,
+	div $s0, $t0
+	mfhi $t1
+	beqz $t1, Factor
+	
+
+Count:
+# Counts how many times the variable passes through the loop
+
+	addi $t0, $t0, -1
+	j Loop
+	
+Factor:
+
+
+	li $v0, 1 #Prints an integer
+	move $a0, $t0
+	syscall
+	
+	li $v0, 4 #Prints a blank line
+	la $a0, BlankLine
+	syscall
+	
+	addi $t2, $t2, 1
+	
+	j Count
+
+Neg:
+# User entered a negative number
+
+	li $v0, 4
+	la $a0, Prompt2 # Tell the user they entered a negative integer and jump to main
+	syscall
+	
+	j main
+
+	
+IsPrime:
+# Determines whether the integer entered is prime, directs to appropriate prompt message	
+	
+	bge $s2, $t2, Prime
+	ble $s2, $t2, NotPrime
+	
+Prime:
+# Displays string that tells user integer is prime.
+
+	li $v0, 4
+	la $a0, Result2
+	syscall
+	
+	j End
+	
+NotPrime:
+# Displays string that tells user integer is NOT prime.
+
+	li $v0, 4
+	la $a0, Result3
+	syscall
+	
+	j End
+	
+End:
+# Has the user either enter a new integer or closes and promps the end message.
+
+	li $v0, 4
+	la $a0, BlankLine
+	syscall
+	
+	li $v0, 4
+	la $a0, Retry # asks user if they want to do it again, have them enter 1 or 0 to confirm.
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t3, $v0
+	
+	beqz $t3, main # If the user enters 1 go back to main
+	
+	li $v0, 4
+	la $a0, Bye
+	syscall
+	li $v0, 10
+	syscall
+
+# END PROGRAM
+	
+	
